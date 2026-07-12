@@ -29,10 +29,17 @@ h3 { font-size: .92rem; color: var(--muted); text-transform: uppercase;
      letter-spacing: .04em; margin: 1.2rem 0 .5rem; }
 details { background: var(--card); border: 1px solid var(--line); border-radius: 8px;
           margin-bottom: .5rem; padding: .55rem .8rem; }
-summary { cursor: pointer; list-style: none; }
+summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: .8rem; }
 summary::-webkit-details-marker { display: none; }
+summary .left { flex: 1; min-width: 0; }
 summary .t { font-weight: 600; }
 summary .a { color: var(--muted); font-size: .84rem; margin-top: .12rem; }
+.btn { flex-shrink: 0; border: 1px solid var(--accent); border-radius: 6px;
+       padding: .18rem .6rem; font-size: .78rem; font-weight: 600; color: var(--accent);
+       white-space: nowrap; user-select: none; }
+.btn:hover { background: var(--chip); }
+.btn::before { content: "摘要 ▾"; }
+details[open] .btn::before { content: "收起 ▴"; }
 details .abs { margin: .6rem 0 .2rem; font-size: .9rem; color: var(--fg); }
 details .abs b { color: var(--muted); }
 .empty { color: var(--muted); font-size: .88rem; font-style: italic; }
@@ -54,8 +61,8 @@ def _article_html(a: dict) -> str:
         else '<p class="abs empty">暂无摘要</p>'
     )
     return f"""<details>
-<summary><div class="t"><a href="{escape(a['url'])}" target="_blank" rel="noopener">{escape(a['title'])}</a></div>
-<div class="a">{authors} · {_fmt_date(a['date'])}</div></summary>
+<summary><div class="left"><div class="t"><a href="{escape(a['url'])}" target="_blank" rel="noopener" onclick="event.stopPropagation()">{escape(a['title'])}</a></div>
+<div class="a">{authors} · {_fmt_date(a['date'])}</div></div><span class="btn" role="button" aria-label="展开/收起摘要"></span></summary>
 {abstract}
 </details>"""
 
