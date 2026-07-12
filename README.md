@@ -5,7 +5,8 @@
 
 - 元数据来源：[Crossref API](https://api.crossref.org)（标题、作者、日期、DOI 链接、部分摘要）
 - 摘要补充：[OpenAlex API](https://openalex.org)（覆盖 Cloudflare 保护的 TAR/MS 等站点，无需抓官网）
-- 每天由 GitHub Actions 定时构建，发布到 GitHub Pages
+- 每周一由 GitHub Actions 定时构建，发布到 GitHub Pages
+- 首页按期刊分组展示全部文章（最新一期 / Online First 分列），点击展开摘要
 
 ## 本地运行
 

@@ -2,7 +2,7 @@ name: Build RSS feeds
 
 on:
   schedule:
-    - cron: "30 2 * * *" # 每天 UTC 02:30（北京时间 10:30）
+    - cron: "30 2 * * 1" # 每周一 UTC 02:30（北京时间 10:30）
   workflow_dispatch:
   push:
     branches: [main]

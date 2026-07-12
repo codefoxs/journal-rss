@@ -48,12 +48,12 @@ def _authors(item: dict) -> list[str]:
     return out
 
 
-def fetch_journal(issns: list[str], rows: int = 40) -> list[dict]:
-    """返回按发表日期倒序的文章列表。"""
+def fetch_journal(issns: list[str], rows: int = 40, sort: str = "published") -> list[dict]:
+    """返回按发表日期倒序的文章列表。sort: published / published-online / published-print"""
     filters = ",".join(f"issn:{i}" for i in issns) + ",type:journal-article"
     params = {
         "filter": filters,
-        "sort": "published",
+        "sort": sort,
         "order": "desc",
         "rows": rows,
         "select": "DOI,title,author,abstract,published,published-online,"
