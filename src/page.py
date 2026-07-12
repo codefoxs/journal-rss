@@ -9,6 +9,7 @@ from xml.sax.saxutils import escape
 
 # code -> (light, dark)
 COLORS = {
+    "nber": ("#a21caf", "#c04ad4"),
     "aer": ("#256abf", "#3987e5"),
     "jf": ("#4a3aa7", "#6b53c8"),
     "jfe": ("#bf4e1e", "#d95926"),
@@ -124,15 +125,22 @@ def build_page(journals: dict, results: dict) -> str:
         r = results.get(code)
         if r is None:
             continue
-        issue_title = (
-            f"最新一期 · {r['issue_label']}" if r["issue_label"] else "最新一期"
-        )
+        if "groups" in r:  # 自定义分组（如 NBER 只有一组 working papers）
+            groups = r["groups"]
+        else:
+            issue_title = (
+                f"最新一期 · {r['issue_label']}" if r["issue_label"] else "最新一期"
+            )
+            groups = [
+                (issue_title, r["issue_articles"]),
+                ("Online First", r["online_articles"]),
+            ]
+        groups_html = "\n".join(_group_html(t, arts, code) for t, arts in groups)
         sections.append(f"""<section id="{code}" class="j-{code}">
 <h2><a href="{escape(meta['homepage'])}" target="_blank" rel="noopener">{escape(meta['name'])}</a>
 <span class="code">{code.upper()}</span>
 <a class="rss" href="feeds/{code}.xml">RSS</a></h2>
-{_group_html(issue_title, r['issue_articles'], code)}
-{_group_html('Online First', r['online_articles'], code)}
+{groups_html}
 </section>""")
     body = "\n".join(sections)
     css = CSS.replace("JOURNAL_COLORS", _journal_colors_css())
@@ -146,7 +154,7 @@ def build_page(journals: dict, results: dict) -> str:
 </head>
 <body>
 <h1>📚 顶刊速递</h1>
-<p class="meta">12 本金融/会计/经济顶刊 · 每周一自动更新 · 更新于 {now} ·
+<p class="meta">12 本金融/会计/经济顶刊 + NBER 公司金融 · 每周一自动更新 · 更新于 {now} ·
 <a href="feeds/all.xml">合并 RSS</a></p>
 <nav>{nav}</nav>
 {body}

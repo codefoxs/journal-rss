@@ -62,6 +62,13 @@ JOURNALS = {
     },
 }
 
+# NBER Corporate Finance 板块（非期刊，走 nber.py 的搜索 API，页面上排在 AER 前面）
+NBER = {
+    "name": "NBER Working Papers · Corporate Finance",
+    "homepage": "https://www.nber.org/papers?page=1&perPage=50&sortBy=public_date"
+    "&facet=topics%3ACorporate+Finance",
+}
+
 # 联系邮箱：进入 Crossref/OpenAlex 的 polite pool，限速更宽松
 MAILTO = "chenzhiwu2023@outlook.com"
 

@@ -3,9 +3,10 @@ import sys
 import time
 from pathlib import Path
 
-from config import ARTICLES_PER_JOURNAL, JOURNALS
+from config import ARTICLES_PER_JOURNAL, JOURNALS, NBER
 from crossref import fetch_journal
 from feed import build_feed
+from nber import fetch_corporate_finance
 from page import build_page
 import elsevier
 import openalex
@@ -56,12 +57,50 @@ def split_issue_online(online_arts, print_arts, all_by_doi):
     return label, issue_articles, online
 
 
+def fill_abstracts(articles: list[dict], sources) -> None:
+    """按顺序用各数据源补齐缺失摘要。"""
+    for source in sources:
+        missing = [a["doi"] for a in articles if not a["abstract"]]
+        if not missing:
+            return
+        found = source.fetch_abstracts(missing)
+        for a in articles:
+            if not a["abstract"] and a["doi"] in found:
+                a["abstract"] = found[a["doi"]]
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     all_articles = []
     doi_to_journal = {}
     page_results = {}
     failed = []
+
+    # NBER Corporate Finance 工作论文（页面上排在 AER 前面）
+    try:
+        nber_arts = fetch_corporate_finance(50)
+        fill_abstracts(nber_arts, (openalex, semanticscholar))
+        for a in nber_arts:
+            if not a["abstract"] and a.get("teaser"):
+                a["abstract"] = a["teaser"] + " […]"
+        n_abs = sum(1 for a in nber_arts if a["abstract"])
+        print(f"[OK] nber: {len(nber_arts)} papers, {n_abs} with abstract")
+
+        xml = build_feed(
+            title=NBER["name"],
+            link=NBER["homepage"],
+            description="Latest NBER working papers in Corporate Finance",
+            articles=nber_arts,
+        )
+        (OUT / "nber.xml").write_text(xml, encoding="utf-8")
+
+        page_results["nber"] = {"groups": [("最新 Working Papers", nber_arts)]}
+        for a in nber_arts:
+            doi_to_journal[a["doi"]] = NBER["name"]
+        all_articles.extend(nber_arts)
+    except Exception as e:
+        print(f"[FAIL] nber: {e}", file=sys.stderr)
+        failed.append("nber")
 
     for code, meta in JOURNALS.items():
         try:
@@ -84,15 +123,8 @@ def main():
             by_doi.setdefault(a["doi"], a)
         articles = sorted(by_doi.values(), key=lambda a: a["date"], reverse=True)
 
-        # 摘要兜底：OpenAlex -> Semantic Scholar
-        for source in (openalex, semanticscholar, elsevier):
-            missing = [a["doi"] for a in articles if not a["abstract"]]
-            if not missing:
-                break
-            found = source.fetch_abstracts(missing)
-            for a in articles:
-                if not a["abstract"] and a["doi"] in found:
-                    a["abstract"] = found[a["doi"]]
+        # 摘要兜底：OpenAlex -> Semantic Scholar -> ScienceDirect
+        fill_abstracts(articles, (openalex, semanticscholar, elsevier))
 
         n_abs = sum(1 for a in articles if a["abstract"])
         print(f"[OK] {code}: {len(articles)} articles, {n_abs} with abstract")
@@ -124,7 +156,7 @@ def main():
     xml = build_feed(
         title="Top Finance & Accounting Journals",
         link=SITE,
-        description="Combined feed: AER, JF, JFE, JFQA, RF, RFS, JAE, TAR, JAR, RAST, MS, CAR",
+        description="Combined feed: NBER-CF, AER, JF, JFE, JFQA, RF, RFS, JAE, TAR, JAR, RAST, MS, CAR",
         articles=all_articles[:200],
         journal_name_of=lambda a: doi_to_journal[a["doi"]],
     )
@@ -133,7 +165,7 @@ def main():
 
     # 生成首页
     index = OUT.parent / "index.html"
-    index.write_text(build_page(JOURNALS, page_results), encoding="utf-8")
+    index.write_text(build_page({"nber": NBER, **JOURNALS}, page_results), encoding="utf-8")
     print("[OK] index.html")
 
     if failed:
