@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 from config import ARTICLES_PER_JOURNAL, JOURNALS, NBER, SSRN
+import crossref
 from crossref import fetch_journal
 from feed import build_feed
 from nber import fetch_corporate_finance
@@ -107,8 +108,9 @@ def main():
     for code, meta in SSRN.items():
         try:
             arts = ssrn.fetch_network(meta["binding"], 50)
-            # 新论文 OpenAlex/S2 大多未收录，最后从 SSRN 论文页尽力抓
-            fill_abstracts(arts, (openalex, semanticscholar, ssrn))
+            # 新论文主要靠 Crossref（SSRN 注册 DOI 时带摘要），
+            # 再用 OpenAlex/S2 兜底，最后从 SSRN 论文页尽力抓
+            fill_abstracts(arts, (crossref, openalex, semanticscholar, ssrn))
             n_abs = sum(1 for a in arts if a["abstract"])
             print(f"[OK] {code}: {len(arts)} papers, {n_abs} with abstract")
 

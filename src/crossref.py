@@ -48,6 +48,31 @@ def _authors(item: dict) -> list[str]:
     return out
 
 
+def fetch_abstracts(dois: list[str]) -> dict[str, str]:
+    """按 DOI 批量补摘要（filter=doi:a,doi:b 为 OR 关系），SSRN 等预印本用。"""
+    found = {}
+    batch = 25
+    for i in range(0, len(dois), batch):
+        chunk = dois[i : i + batch]
+        params = {
+            "filter": ",".join(f"doi:{d}" for d in chunk),
+            "rows": len(chunk),
+            "select": "DOI,abstract",
+            "mailto": MAILTO,
+        }
+        try:
+            r = requests.get(API, params=params, headers=HEADERS, timeout=60)
+            r.raise_for_status()
+        except requests.RequestException:
+            continue
+        for item in r.json()["message"]["items"]:
+            abstract = item.get("abstract")
+            if abstract:
+                found[item["DOI"].lower()] = _strip_jats(abstract)
+        time.sleep(1)
+    return found
+
+
 def fetch_journal(issns: list[str], rows: int = 40, sort: str = "published") -> list[dict]:
     """返回按发表日期倒序的文章列表。sort: published / published-online / published-print"""
     filters = ",".join(f"issn:{i}" for i in issns) + ",type:journal-article"
