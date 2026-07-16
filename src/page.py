@@ -10,6 +10,9 @@ from xml.sax.saxutils import escape
 # code -> (light, dark)
 COLORS = {
     "nber": ("#a21caf", "#c04ad4"),
+    "arn": ("#6a7d0a", "#7f9210"),
+    "cgn": ("#00876f", "#14a396"),
+    "fen": ("#178a3e", "#2fae55"),
     "aer": ("#256abf", "#3987e5"),
     "jf": ("#4a3aa7", "#6b53c8"),
     "jfe": ("#bf4e1e", "#d95926"),
@@ -154,11 +157,11 @@ def build_page(journals: dict, results: dict) -> str:
 </head>
 <body>
 <h1>📚 顶刊速递</h1>
-<p class="meta">12 本金融/会计/经济顶刊 + NBER 公司金融 · 每周一自动更新 · 更新于 {now} ·
+<p class="meta">12 本金融/会计/经济顶刊 + NBER 公司金融 + SSRN 三大网络 · 每周一自动更新 · 更新于 {now} ·
 <a href="feeds/all.xml">合并 RSS</a></p>
 <nav>{nav}</nav>
 {body}
-<footer>数据来源：Crossref · OpenAlex · Semantic Scholar · 点击文章标题跳转原文，点击"摘要"按钮展开。<br>
+<footer>数据来源：Crossref · OpenAlex · Semantic Scholar · NBER · SSRN · 点击文章标题跳转原文，点击"摘要"按钮展开。<br>
 RSS 订阅：合并源 <code>feeds/all.xml</code>，单刊源 <code>feeds/&lt;code&gt;.xml</code>。</footer>
 </body>
 </html>

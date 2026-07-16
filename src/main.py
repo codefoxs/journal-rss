@@ -3,7 +3,7 @@ import sys
 import time
 from pathlib import Path
 
-from config import ARTICLES_PER_JOURNAL, JOURNALS, NBER
+from config import ARTICLES_PER_JOURNAL, JOURNALS, NBER, SSRN
 from crossref import fetch_journal
 from feed import build_feed
 from nber import fetch_corporate_finance
@@ -11,6 +11,7 @@ from page import build_page
 import elsevier
 import openalex
 import semanticscholar
+import ssrn
 
 OUT = Path(__file__).resolve().parent.parent / "public" / "feeds"
 SITE = "https://SITE_PLACEHOLDER"  # 由 index.html 生成时替换，feed 内只作 channel link
@@ -102,6 +103,32 @@ def main():
         print(f"[FAIL] nber: {e}", file=sys.stderr)
         failed.append("nber")
 
+    # SSRN 三大网络（页面上排在 NBER 之后、AER 之前）
+    for code, meta in SSRN.items():
+        try:
+            arts = ssrn.fetch_network(meta["binding"], 50)
+            # 新论文 OpenAlex/S2 大多未收录，最后从 SSRN 论文页尽力抓
+            fill_abstracts(arts, (openalex, semanticscholar, ssrn))
+            n_abs = sum(1 for a in arts if a["abstract"])
+            print(f"[OK] {code}: {len(arts)} papers, {n_abs} with abstract")
+
+            xml = build_feed(
+                title=meta["name"],
+                link=meta["homepage"],
+                description=f"Latest working papers from {meta['name']}",
+                articles=arts,
+            )
+            (OUT / f"{code}.xml").write_text(xml, encoding="utf-8")
+
+            page_results[code] = {"groups": [("最新 Working Papers", arts)]}
+            for a in arts:
+                doi_to_journal[a["doi"]] = meta["name"]
+            all_articles.extend(arts)
+        except Exception as e:
+            print(f"[FAIL] {code}: {e}", file=sys.stderr)
+            failed.append(code)
+        time.sleep(1)
+
     for code, meta in JOURNALS.items():
         try:
             # 两次查询：online 序抓 Online First，print 序抓最新正式期
@@ -156,7 +183,7 @@ def main():
     xml = build_feed(
         title="Top Finance & Accounting Journals",
         link=SITE,
-        description="Combined feed: NBER-CF, AER, JF, JFE, JFQA, RF, RFS, JAE, TAR, JAR, RAST, MS, CAR",
+        description="Combined feed: NBER-CF, SSRN (ARN/CGN/FEN), AER, JF, JFE, JFQA, RF, RFS, JAE, TAR, JAR, RAST, MS, CAR",
         articles=all_articles[:200],
         journal_name_of=lambda a: doi_to_journal[a["doi"]],
     )
@@ -165,7 +192,9 @@ def main():
 
     # 生成首页
     index = OUT.parent / "index.html"
-    index.write_text(build_page({"nber": NBER, **JOURNALS}, page_results), encoding="utf-8")
+    index.write_text(
+        build_page({"nber": NBER, **SSRN, **JOURNALS}, page_results), encoding="utf-8"
+    )
     print("[OK] index.html")
 
     if failed:

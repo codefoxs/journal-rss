@@ -69,6 +69,25 @@ NBER = {
     "&facet=topics%3ACorporate+Finance",
 }
 
+# SSRN 三大网络（走 ssrn.py 的内容 API，页面上排在 NBER 之后、AER 之前）
+SSRN = {
+    "arn": {
+        "name": "SSRN · Accounting Research Network",
+        "binding": 204,
+        "homepage": "https://www.ssrn.com/index.cfm/en/arn/",
+    },
+    "cgn": {
+        "name": "SSRN · Corporate Governance Network",
+        "binding": 1566963,
+        "homepage": "https://www.ssrn.com/index.cfm/en/cgn/",
+    },
+    "fen": {
+        "name": "SSRN · Financial Economics Network",
+        "binding": 203,
+        "homepage": "https://www.ssrn.com/index.cfm/en/fen/",
+    },
+}
+
 # 联系邮箱：进入 Crossref/OpenAlex 的 polite pool，限速更宽松
 MAILTO = "chenzhiwu2023@outlook.com"
 
