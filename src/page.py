@@ -100,7 +100,7 @@ def _article_html(a: dict, code: str) -> str:
     abstract = (
         f'<p class="abs"><b>Abstract</b> — {escape(a["abstract"])}</p>'
         if a["abstract"]
-        else '<p class="abs empty">暂无摘要</p>'
+        else '<p class="abs empty">获取失败，请前往主页查看</p>'
     )
     return f"""<details>
 <summary><div class="left"><div class="t"><a href="{escape(a['url'])}" target="_blank" rel="noopener" onclick="event.stopPropagation()">{escape(a['title'])}</a></div>
@@ -153,6 +153,8 @@ def build_page(journals: dict, results: dict) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>顶刊速递 · Finance &amp; Accounting</title>
+<link rel="icon" type="image/png" href="FOX.png">
+<link rel="apple-touch-icon" href="FOX.png">
 <style>{css}</style>
 </head>
 <body>
